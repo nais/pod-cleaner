@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 import kubernetes
+import sys
 
 import time
 from kubernetes import client, config
@@ -20,6 +21,7 @@ except kubernetes.config.config_exception.ConfigException as e:
     except kubernetes.config.config_exception.ConfigException as e2:
         print(e)
         print(e2)
+        sys.exit(1)
 
 api = client.CoreV1Api()
 while True:
