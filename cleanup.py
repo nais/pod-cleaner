@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 import sys
 
+import time
 import urllib3
 from kubernetes import client, config
 from kubernetes.client.rest import ApiException
@@ -34,3 +35,5 @@ while True:
                             api.delete_namespaced_pod(pod.metadata.name, pod.metadata.namespace)
                         except ApiException as e:
                             print('exception while deleting: ', e)
+
+    time.sleep(120)
