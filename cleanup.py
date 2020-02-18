@@ -1,8 +1,5 @@
 #!/usr/bin/env python3
-import sys
-
 import time
-import urllib3
 from kubernetes import client, config
 from kubernetes.client.rest import ApiException
 import argparse
@@ -16,7 +13,9 @@ print("dry-run" if args.dry_run else 'wet-run')
 config.load_incluster_config()
 api = client.CoreV1Api()
 while True:
+    print("listing pods")
     pods = api.list_pod_for_all_namespaces()
+    print("listing pods done")
 
     for pod in pods.items:
         if pod.status and \
