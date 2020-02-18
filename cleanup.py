@@ -23,9 +23,7 @@ except kubernetes.config.config_exception.ConfigException as e:
 
 api = client.CoreV1Api()
 while True:
-    print("listing pods")
     pods = api.list_pod_for_all_namespaces()
-    print("listing pods done")
 
     for pod in pods.items:
         if pod.status and \
