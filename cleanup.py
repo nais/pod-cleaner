@@ -1,4 +1,6 @@
 #!/usr/bin/env python3
+import kubernetes
+
 import time
 from kubernetes import client, config
 from kubernetes.client.rest import ApiException
@@ -10,7 +12,15 @@ args = parser.parse_args()
 
 print("dry-run" if args.dry_run else 'wet-run')
 
-config.load_incluster_config()
+try:
+    config.load_incluster_config()
+except kubernetes.config.config_exception.ConfigException as e:
+    try:
+        config.load_kube_config()
+    except kubernetes.config.config_exception.ConfigException as e2:
+        print(e)
+        print(e2)
+
 api = client.CoreV1Api()
 while True:
     print("listing pods")
