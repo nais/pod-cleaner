@@ -7,6 +7,8 @@ from kubernetes import client, config
 from kubernetes.client.rest import ApiException
 import argparse
 
+ignored_namespaces = ['kube-system', 'reboot-coordinator']
+
 parser = argparse.ArgumentParser(description="Pod Cleaner")
 parser.add_argument('--dry-run', action='store_true')
 args = parser.parse_args()
@@ -28,6 +30,9 @@ while True:
     pods = api.list_pod_for_all_namespaces()
 
     for pod in pods.items:
+        if pod.metadata.namespace in ignored_namespaces:
+            continue
+
         if pod.status and \
                 pod.status.container_statuses:
             for container_status in pod.status.container_statuses:
