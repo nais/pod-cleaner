@@ -27,27 +27,30 @@ except kubernetes.config.config_exception.ConfigException as e:
 
 api = client.CoreV1Api()
 while True:
-    pods = api.list_pod_for_all_namespaces()
+    try:
+        pods = api.list_pod_for_all_namespaces()
 
-    for pod in pods.items:
-        if pod.metadata.namespace in ignored_namespaces:
-            continue
+        for pod in pods.items:
+            if pod.metadata.namespace in ignored_namespaces:
+                continue
 
-        if pod.status and \
-                pod.status.container_statuses:
-            for container_status in pod.status.container_statuses:
-                if not container_status.ready \
-                        and container_status.last_state \
-                        and container_status.last_state.terminated \
-                        and container_status.last_state.terminated.reason \
-                        and container_status.last_state.terminated.reason == 'ContainerCannotRun':
-                    if args.dry_run:
-                        print('dry-run: would have deleted', pod.metadata.name, 'in', pod.metadata.namespace)
-                    else:
-                        try:
-                            print('deleting', pod.metadata.name, 'in', pod.metadata.namespace)
-                            api.delete_namespaced_pod(pod.metadata.name, pod.metadata.namespace)
-                        except ApiException as e:
-                            print('exception while deleting: ', e)
+            if pod.status and \
+                    pod.status.container_statuses:
+                for container_status in pod.status.container_statuses:
+                    if not container_status.ready \
+                            and container_status.last_state \
+                            and container_status.last_state.terminated \
+                            and container_status.last_state.terminated.reason \
+                            and container_status.last_state.terminated.reason == 'ContainerCannotRun':
+                        if args.dry_run:
+                            print('dry-run: would have deleted', pod.metadata.name, 'in', pod.metadata.namespace)
+                        else:
+                            try:
+                                print('deleting', pod.metadata.name, 'in', pod.metadata.namespace)
+                                api.delete_namespaced_pod(pod.metadata.name, pod.metadata.namespace)
+                            except ApiException as e:
+                                print('exception while deleting: ', e)
+    except ApiException as e:
+        print('exception while listing pods: ', e)
 
     time.sleep(120)
