@@ -10,6 +10,10 @@ install:
 test:
 	. venv/bin/activate; python -m cleanup_test
 
+.PHONY: e2e
+e2e:
+	. venv/bin/activate; python -m cleanup_e2e
+
 .PHONY: build
 build:
 	docker build -t ${image} .
