@@ -10,16 +10,6 @@ from kubernetes import client, config
 from kubernetes.client.rest import ApiException
 import kubernetes
 
-urllib3.disable_warnings()
-try:
-    config.load_incluster_config()
-except kubernetes.config.config_exception.ConfigException:
-    try:
-        config.load_kube_config()
-    except kubernetes.config.config_exception.ConfigException as e2:
-        raise e2
-        sys.exit(1)
-
 
 def should_pod_be_deleted(pod) -> bool:
     try:
@@ -52,6 +42,17 @@ def get_pods_to_check(namespace, api, dry_run=False):
 
 
 if __name__ == '__main__':
+    urllib3.disable_warnings()
+
+    try:
+        config.load_incluster_config()
+    except kubernetes.config.config_exception.ConfigException:
+        try:
+            config.load_kube_config()
+        except kubernetes.config.config_exception.ConfigException as e2:
+            raise e2
+            sys.exit(1)
+
     parser = argparse.ArgumentParser(description="Pod Cleaner")
     parser.add_argument('--dry-run', action='store_true')
     args = parser.parse_args()

@@ -1,5 +1,12 @@
+#!/usr/bin/env python3
+
+# Std libs
 import unittest
+
+# 1st party deps
 from cleanup import should_pod_be_deleted
+
+# 3rd party deps
 from kubernetes import client
 
 
