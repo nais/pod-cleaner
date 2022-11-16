@@ -2,9 +2,7 @@
 
 # Std libs
 import argparse
-import contextlib
 import sys
-import time
 import urllib3
 
 # 3rd party deps
@@ -15,7 +13,7 @@ import kubernetes
 urllib3.disable_warnings()
 try:
     config.load_incluster_config()
-except kubernetes.config.config_exception.ConfigException as e:
+except kubernetes.config.config_exception.ConfigException:
     try:
         config.load_kube_config()
     except kubernetes.config.config_exception.ConfigException as e2:
@@ -23,7 +21,7 @@ except kubernetes.config.config_exception.ConfigException as e:
         sys.exit(1)
 
 
-def should_pod_be_deleted(pod)-> bool:
+def should_pod_be_deleted(pod) -> bool:
     try:
         containers = pod.status.container_statuses
     except Exception:
@@ -63,13 +61,16 @@ if __name__ == '__main__':
     for namespace in get_namespaces_to_check(api):
         if args.dry_run:
             print(f"Checking namespace: {namespace.metadata.name}")
-        for pod_to_be_deleted in get_pods_to_check(namespace, api, args.dry_run):
+        for pod in get_pods_to_check(namespace, api, args.dry_run):
             if args.dry_run:
-                print('dry-run: would have deleted', pod.metadata.name, 'in', pod.metadata.namespace)
+                print('dry-run: would have deleted',
+                      pod.metadata.name, 'in', pod.metadata.namespace)
                 continue
 
             try:
-                print('deleting', pod.metadata.name, 'in', pod.metadata.namespace)
-                api.delete_namespaced_pod(pod.metadata.name, pod.metadata.namespace)
+                print('deleting', pod.metadata.name,
+                      'in', pod.metadata.namespace)
+                api.delete_namespaced_pod(
+                    pod.metadata.name, pod.metadata.namespace)
             except ApiException as e:
                 print('exception while deleting: ', e)
