@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 
 
+import os
 import subprocess
 import sys
 import time
@@ -75,6 +76,9 @@ def run_cleanup():
 
 
 def ask_and_exit(exit_code=0):
+    if os.getenv('CI') == 'true':
+        sys.exit(exit_code)
+
     prompt = input(f"Clean up namespace {namespace}? [y/N] ")
     if prompt.lower() == 'y':
         print("Deleting namespace")
