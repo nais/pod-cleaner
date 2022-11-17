@@ -51,7 +51,6 @@ if __name__ == '__main__':
             config.load_kube_config()
         except kubernetes.config.config_exception.ConfigException as e2:
             raise e2
-            sys.exit(1)
 
     parser = argparse.ArgumentParser(description="Pod Cleaner")
     parser.add_argument('--dry-run', action='store_true')

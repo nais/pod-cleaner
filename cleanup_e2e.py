@@ -106,6 +106,9 @@ if __name__ == '__main__':
     print("Creating pods")
     create_pods(api, namespace, TEST_IMAGE)
 
+    print("Waiting for good luck")
+    time.sleep(30)
+
     print("Starting cleanup.py")
     cleanup = run_cleanup()
 
@@ -117,7 +120,7 @@ if __name__ == '__main__':
         ask_and_exit(1)
 
     print("Waiting 30s for pods to be removed from API-server...")
-    time.sleep(30)
+    time.sleep(60)
 
     print("Checking remaining pods")
     pods = api.list_namespaced_pod(namespace=namespace).items
