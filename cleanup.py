@@ -3,12 +3,12 @@
 # Std libs
 import argparse
 import sys
-import urllib3
 
+import kubernetes
+import urllib3
 # 3rd party deps
 from kubernetes import client, config
 from kubernetes.client.rest import ApiException
-import kubernetes
 
 
 def should_pod_be_deleted(pod) -> bool:
@@ -77,5 +77,3 @@ if __name__ == '__main__':
                     pod.metadata.name, pod.metadata.namespace)
             except ApiException as e:
                 print('exception while deleting: ', e)
-    else:
-        print('No namespaces found')
