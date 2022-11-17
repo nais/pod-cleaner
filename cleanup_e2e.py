@@ -69,7 +69,7 @@ def namespace_name(name):
 
 def run_cleanup():
     return subprocess.run(
-        [sys.executable, 'cleanup.py'],
+        [sys.executable, 'cleanup.py', '--verbose', '--debug'],
         stdout=subprocess.PIPE,
         stderr=subprocess.PIPE,
         text=True)

@@ -55,12 +55,14 @@ if __name__ == '__main__':
 
     parser = argparse.ArgumentParser(description="Pod Cleaner")
     parser.add_argument('--dry-run', action='store_true')
+    parser.add_argument('--verbose', action='store_true')
+    parser.add_argument('--debug', action='store_true')
     args = parser.parse_args()
     print("dry-run" if args.dry_run else 'wet-run')
 
     api = client.CoreV1Api()
     for namespace in get_namespaces_to_check(api):
-        if args.dry_run:
+        if args.dry_run or args.verbose:
             print(f"Checking namespace: {namespace.metadata.name}")
         for pod in get_pods_to_check(namespace, api, args.dry_run):
             if args.dry_run:
@@ -75,3 +77,5 @@ if __name__ == '__main__':
                     pod.metadata.name, pod.metadata.namespace)
             except ApiException as e:
                 print('exception while deleting: ', e)
+    else:
+        print('No namespaces found')
