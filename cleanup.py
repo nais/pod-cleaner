@@ -1,54 +1,78 @@
 #!/usr/bin/env python3
-import kubernetes
+
+# Std libs
+import argparse
 import sys
 
-import time
+import kubernetes
+import urllib3
+# 3rd party deps
 from kubernetes import client, config
 from kubernetes.client.rest import ApiException
-import argparse
 
-ignored_namespaces = ['kube-system', 'reboot-coordinator']
 
-parser = argparse.ArgumentParser(description="Pod Cleaner")
-parser.add_argument('--dry-run', action='store_true')
-args = parser.parse_args()
-
-print("dry-run" if args.dry_run else 'wet-run')
-
-try:
-    config.load_incluster_config()
-except kubernetes.config.config_exception.ConfigException as e:
+def should_pod_be_deleted(pod) -> bool:
     try:
-        config.load_kube_config()
-    except kubernetes.config.config_exception.ConfigException as e2:
-        print(e)
-        print(e2)
-        sys.exit(1)
+        containers = pod.status.container_statuses
+    except Exception:
+        return False
 
-api = client.CoreV1Api()
-namespaces = api.list_namespace()
-for namespace in namespaces.items:
-    namespace_name = namespace.metadata.name
+    for container in containers:
+        try:
+            if container.last_state.terminated.reason == 'ContainerCannotRun':
+                return True
+        except Exception:
+            continue
 
-    if namespace_name in ignored_namespaces:
-        continue
+    return False
 
-    pods = api.list_namespaced_pod(namespace=namespace_name)
-    for pod in pods.items:
 
-        if pod.status and \
-                pod.status.container_statuses:
-            for container_status in pod.status.container_statuses:
-                if not container_status.ready \
-                        and container_status.last_state \
-                        and container_status.last_state.terminated \
-                        and container_status.last_state.terminated.reason \
-                        and container_status.last_state.terminated.reason == 'ContainerCannotRun':
-                    if args.dry_run:
-                        print('dry-run: would have deleted', pod.metadata.name, 'in', pod.metadata.namespace)
-                    else:
-                        try:
-                            print('deleting', pod.metadata.name, 'in', pod.metadata.namespace)
-                            api.delete_namespaced_pod(pod.metadata.name, pod.metadata.namespace)
-                        except ApiException as e:
-                            print('exception while deleting: ', e)
+def get_namespaces_to_check(api):
+    for namespace in api.list_namespace().items:
+        if namespace.metadata.name not in ('kube-system', 'reboot-coordinator'):
+            yield namespace
+
+
+def get_pods_to_check(namespace, api, dry_run=False):
+    for pod in api.list_namespaced_pod(namespace=namespace.metadata.name).items:
+        if dry_run:
+            print(f"\tChecking pod: {pod.metadata.name}")
+        if should_pod_be_deleted(pod):
+            yield pod
+
+
+if __name__ == '__main__':
+    urllib3.disable_warnings()
+
+    try:
+        config.load_incluster_config()
+    except kubernetes.config.config_exception.ConfigException:
+        try:
+            config.load_kube_config()
+        except kubernetes.config.config_exception.ConfigException as e2:
+            raise e2
+
+    parser = argparse.ArgumentParser(description="Pod Cleaner")
+    parser.add_argument('--dry-run', action='store_true')
+    parser.add_argument('--verbose', action='store_true')
+    parser.add_argument('--debug', action='store_true')
+    args = parser.parse_args()
+    print("dry-run" if args.dry_run else 'wet-run')
+
+    api = client.CoreV1Api()
+    for namespace in get_namespaces_to_check(api):
+        if args.dry_run or args.verbose:
+            print(f"Checking namespace: {namespace.metadata.name}")
+        for pod in get_pods_to_check(namespace, api, args.dry_run):
+            if args.dry_run:
+                print('dry-run: would have deleted',
+                      pod.metadata.name, 'in', pod.metadata.namespace)
+                continue
+
+            try:
+                print('deleting', pod.metadata.name,
+                      'in', pod.metadata.namespace)
+                api.delete_namespaced_pod(
+                    pod.metadata.name, pod.metadata.namespace)
+            except ApiException as e:
+                print('exception while deleting: ', e)

@@ -1,7 +1,7 @@
-FROM python:3.7-alpine
+FROM python:3.9-alpine
 
 COPY requirements.txt ./
 RUN pip install --no-cache-dir -r requirements.txt
 
-COPY . .
+COPY cleanup.py .
 CMD ["python", "./cleanup.py"]
