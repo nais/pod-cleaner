@@ -11,10 +11,37 @@ from kubernetes import client, config
 from kubernetes.client.rest import ApiException
 
 
-def should_pod_be_deleted(pod) -> bool:
+def pod_is_terminated(pod) -> bool:
+    try:
+        reason = pod.status.reason
+    except Exception:
+        return False
+
+    if reason == 'Terminated':
+        return True
+
+    return False
+
+
+def no_node_for_pod(pod) -> bool:
+    try:
+        reason = pod.status.reason
+    except Exception:
+        return False
+
+    if reason == 'NodeAffinity':
+        return True
+
+    return False
+
+
+def container_cannot_run(pod) -> bool:
     try:
         containers = pod.status.container_statuses
     except Exception:
+        return False
+
+    if not containers:
         return False
 
     for container in containers:
@@ -25,6 +52,10 @@ def should_pod_be_deleted(pod) -> bool:
             continue
 
     return False
+
+
+def should_pod_be_deleted(pod) -> bool:
+    return pod_is_terminated(pod) or container_cannot_run(pod) or no_node_for_pod(pod)
 
 
 def get_namespaces_to_check(api):
