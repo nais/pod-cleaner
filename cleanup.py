@@ -44,9 +44,14 @@ def container_cannot_run(pod) -> bool:
     if not containers:
         return False
 
+    terminated_reasons = [
+        'ContainerCannotRun',
+        'StartError'
+    ]
+
     for container in containers:
         try:
-            if container.last_state.terminated.reason == 'ContainerCannotRun':
+            if container.last_state.terminated.reason in terminated_reasons:
                 return True
         except Exception:
             continue
